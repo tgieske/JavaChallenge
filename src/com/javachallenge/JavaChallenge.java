@@ -15,6 +15,7 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
@@ -25,12 +26,21 @@ public class JavaChallenge {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		challenge1();
+		challenge2();
+		
+		System.out.println("All Challenges Complete.");
+		System.exit(0);
+		return;
+	}
+	
+	public static void challenge1() {
 		BufferedReader in = null;
 		
 		try{
 			establishTrust();
 			String url ="https://friendpaste.com/71KNTMaFCZ6diD2esfC4Vo/raw?rev=626665323233";
-			System.out.println(String.format("Requesting data from %s", url));
+			System.out.println(String.format("Challenge 1 : Requesting data from %s", url));
 			
 			HttpsURLConnection conn = (HttpsURLConnection)new URL(url).openConnection();
 			
@@ -64,8 +74,53 @@ public class JavaChallenge {
 				}catch(Exception e){}
 			}
 		}
-		System.out.println("Done");
-		System.exit(0);
+		return;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static void challenge2() {
+		BufferedReader in = null;
+		
+		try{
+			String url ="https://gist.githubusercontent.com/anonymous/8f60e8f49158efdd2e8fed6fa97373a4/raw/01add7ea44ed12f5d90180dc1367915af331492e/java-data2.json";
+			System.out.println(String.format("Challege 2, fun with threads, Requesting data from %s", url));
+			
+			HttpsURLConnection conn = (HttpsURLConnection)new URL(url).openConnection();
+			
+			int resp = conn.getResponseCode();
+			System.out.println(String.format("Response : %d", resp));
+	
+			in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+			StringBuffer data = new StringBuffer();
+	
+			String s;
+			while ((s = in.readLine()) != null) {
+				data.append(s);
+			}
+			
+			System.out.println(String.format("Parse Response to JSON : %s", data.toString()));
+			
+			JSONParser jp = new JSONParser();
+			JSONObject jo = (JSONObject) jp.parse(data.toString());
+			JSONArray items = (JSONArray) jo.get("items");
+			
+			 Iterator<JSONObject> it = items.iterator();
+			 while (it.hasNext()) {
+				 JSONObject item = (JSONObject)it.next();
+				 long idx = (Long)item.get("index");
+				 String uid = (String)item.get("uid");
+				 CheckSumThread cst = new CheckSumThread(idx, uid);
+				 cst.start();
+            }
+		}catch(Exception e){
+			e.printStackTrace();
+		}finally{
+			if (in != null){
+				try{
+					in.close();
+				}catch(Exception e){}
+			}
+		}
 		return;
 	}
 	
